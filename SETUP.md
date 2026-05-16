@@ -41,17 +41,17 @@ ls -lh /opt/datadog/dd-java-agent-1.56.3.jar
 
 ## Step 4 — Add Java agent to setDomainEnv.sh
 
-`setDomainEnv.sh` is sourced by both the Admin Server and Managed Server on startup. It is the correct place to inject the Java agent and Unified Service Tags for WebLogic.
+`setDomainEnv.sh` is sourced by both the Admin Server and Managed Server on startup. It is the correct place to inject the Java agent, Unified Service Tags, and profiler config for WebLogic.
 
 > `DD_SERVICE` must be set here for APM traces. The process check `service` tag (Step 5) only tags process-level metrics — it does not affect the Java tracer.
 
 ```bash
-sudo bash -c 'printf "\nexport DD_SERVICE=<YOUR_SERVICE>\nexport DD_ENV=<YOUR_ENV>\nexport DD_VERSION=<YOUR_VERSION>\nexport DD_AGENT_HOST=localhost\nJAVA_OPTIONS=\"\${JAVA_OPTIONS} -javaagent:/opt/datadog/dd-java-agent-1.56.3.jar\"\nexport JAVA_OPTIONS\n" >> /opt/oracle/domains/<YOUR_DOMAIN>/bin/setDomainEnv.sh'
+sudo bash -c 'printf "\nexport DD_SERVICE=<YOUR_SERVICE>\nexport DD_ENV=<YOUR_ENV>\nexport DD_VERSION=<YOUR_VERSION>\nexport DD_AGENT_HOST=localhost\nexport DD_PROFILING_ENABLED=true\nJAVA_OPTIONS=\"\${JAVA_OPTIONS} -javaagent:/opt/datadog/dd-java-agent-1.56.3.jar\"\nexport JAVA_OPTIONS\n" >> /opt/oracle/domains/<YOUR_DOMAIN>/bin/setDomainEnv.sh'
 ```
 
 Verify:
 ```bash
-sudo tail -7 /opt/oracle/domains/<YOUR_DOMAIN>/bin/setDomainEnv.sh
+sudo tail -8 /opt/oracle/domains/<YOUR_DOMAIN>/bin/setDomainEnv.sh
 ```
 
 ---
@@ -126,7 +126,27 @@ sudo chmod o+rx /opt/oracle/domains
 
 ---
 
-## Step 7 — Restart the agent
+## Step 7 — Enable Cloud Network Monitoring
+
+Add to `datadog.yaml`:
+```bash
+sudo bash -c 'printf "\nnetwork_config:\n  enabled: true\n" >> /etc/datadog-agent/datadog.yaml'
+```
+
+Add to `system-probe.yaml`:
+```bash
+sudo bash -c 'printf "network_config:\n  enabled: true\n" >> /etc/datadog-agent/system-probe.yaml'
+```
+
+Enable and start the system probe:
+```bash
+sudo systemctl enable datadog-agent-sysprobe
+sudo systemctl start datadog-agent-sysprobe
+```
+
+---
+
+## Step 8 — Restart the agent
 
 ```bash
 sudo systemctl restart datadog-agent
@@ -139,7 +159,7 @@ sudo datadog-agent status 2>&1 | grep -E 'Process Agent|Status:|weblogic'
 
 ---
 
-## Step 8 — Restart WebLogic
+## Step 9 — Restart WebLogic
 
 ```bash
 sudo -u oracle nohup /opt/oracle/domains/<YOUR_DOMAIN>/startWebLogic.sh > /tmp/adminserver.log 2>&1 &
@@ -158,5 +178,7 @@ until grep -q 'Server state changed to RUNNING' /tmp/managed.log 2>/dev/null; do
 |---|---|---|
 | APM Traces | APM → Services → `<YOUR_SERVICE>` | `env` `service` `version` |
 | JVM Metrics | APM → Services → `<YOUR_SERVICE>` → JVM Metrics | `env` `service` |
+| Continuous Profiler | APM → Profile Search | `env` `service` `version` |
 | Logs | Logs → Explorer → `source:weblogic` | `service` `env` |
 | Live Processes | Infrastructure → Processes | `service` |
+| Network | NPM → Network Overview | host-level network flows |
