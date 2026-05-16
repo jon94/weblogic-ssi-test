@@ -48,8 +48,10 @@ ls -lh /opt/datadog/dd-java-agent-1.56.3.jar
 > `DD_SERVICE` must be set here for APM traces. The process check `service` tag (Step 5) only tags process-level metrics — it does not affect the Java tracer.
 
 ```bash
-sudo bash -c 'printf "\nexport DD_SERVICE=<YOUR_SERVICE>\nexport DD_ENV=<YOUR_ENV>\nexport DD_VERSION=<YOUR_VERSION>\nexport DD_AGENT_HOST=localhost\nexport DD_PROFILING_ENABLED=true\nJAVA_OPTIONS=\"\${JAVA_OPTIONS} -javaagent:/opt/datadog/dd-java-agent-1.56.3.jar\"\nexport JAVA_OPTIONS\n" >> /opt/oracle/domains/<YOUR_DOMAIN>/bin/setDomainEnv.sh'
+sudo bash -c 'printf "\nexport DD_SERVICE=<YOUR_SERVICE>\nexport DD_ENV=<YOUR_ENV>\nexport DD_VERSION=<YOUR_VERSION>\nexport DD_AGENT_HOST=localhost\nexport DD_PROFILING_ENABLED=true\nexport DD_LOGS_INJECTION=true\nJAVA_OPTIONS=\"\${JAVA_OPTIONS} -javaagent:/opt/datadog/dd-java-agent-1.56.3.jar\"\nexport JAVA_OPTIONS\n" >> /opt/oracle/domains/<YOUR_DOMAIN>/bin/setDomainEnv.sh'
 ```
+
+> `DD_LOGS_INJECTION=true` injects `dd.trace_id`, `dd.span_id`, `dd.service`, `dd.env`, and `dd.version` into application logs, enabling trace-to-log correlation in Datadog. Note: this works with standard logging frameworks (Log4j, Log4j2, Logback) — WebLogic's own internal server logs will not have trace IDs injected.
 
 Verify:
 ```bash

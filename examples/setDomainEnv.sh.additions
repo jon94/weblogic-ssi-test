@@ -13,5 +13,6 @@ export DD_ENV=demo
 export DD_VERSION=1.0
 export DD_AGENT_HOST=localhost
 export DD_PROFILING_ENABLED=true
+export DD_LOGS_INJECTION=true
 JAVA_OPTIONS="${JAVA_OPTIONS} -javaagent:/opt/datadog/dd-java-agent-1.56.3.jar"
 export JAVA_OPTIONS
