@@ -1,10 +1,4 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="org.apache.logging.log4j.LogManager" %>
-<%@ page import="org.apache.logging.log4j.Logger" %>
-<%
-  Logger logger = LogManager.getLogger("petclinic.owners");
-  logger.info("GET /owners.jsp - listing all owners for {}", request.getRemoteAddr());
-%>
 <!DOCTYPE html>
 <html>
 <head><title>Owners - PetClinic</title>

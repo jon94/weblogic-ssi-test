@@ -1,21 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ page import="org.apache.logging.log4j.LogManager" %>
-<%@ page import="org.apache.logging.log4j.Logger" %>
-<%@ page import="datadog.trace.api.GlobalTracer" %>
-<%@ page import="datadog.trace.api.interceptor.MutableSpan" %>
-<%@ page import="io.opentracing.Span" %>
-<%@ page import="io.opentracing.Tracer" %>
-<%@ page import="io.opentracing.util.GlobalTracer" %>
-<%
-  Logger logger = LogManager.getLogger("petclinic.index");
-  Tracer tracer = io.opentracing.util.GlobalTracer.get();
-  Span span = tracer.buildSpan("petclinic.index.get").start();
-  try (io.opentracing.Scope scope = tracer.activateSpan(span)) {
-    logger.info("GET / - request from {}", request.getRemoteAddr());
-  } finally {
-    span.finish();
-  }
-%>
+<%@ page import="java.net.InetAddress" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -44,7 +28,7 @@
     <tr><th>Property</th><th>Value</th></tr>
     <tr><td>Server</td><td><%= application.getServerInfo() %></td></tr>
     <tr><td>Java Version</td><td><%= System.getProperty("java.version") %></td></tr>
-    <tr><td>Hostname</td><td><%= java.net.InetAddress.getLocalHost().getHostName() %></td></tr>
+    <tr><td>Hostname</td><td><%= InetAddress.getLocalHost().getHostName() %></td></tr>
     <tr><td>Time</td><td><%= new java.util.Date() %></td></tr>
   </table>
 </body>
