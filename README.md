@@ -514,6 +514,26 @@ In Datadog: open any trace in **APM → Traces**, click the `env`, `service`, or
 | `Unable to obtain lock on AdminServer.lok` | Previous server crashed and left lock files | `sudo find /opt/oracle/domains -name '*.lok' \| xargs sudo rm -f` |
 | `Cannot open file _WLS_ADMINSERVER000000.DAT` | Persistent store lock from crashed process | `sudo find .../servers/AdminServer/data/store -type f \| xargs sudo rm -f` |
 
+### Known limitation — APM traces not generated for JSP requests
+
+**Symptom:** Agent is loaded and connected, `dd.service`/`dd.env`/`dd.version` appear in logs via MDC, but `dd.trace_id`/`dd.span_id` are empty and no HTTP traces appear in APM for requests to JSP pages.
+
+**Root cause:** WebLogic overrides the JVM system classloader with its own implementation:
+```
+-Djava.system.class.loader=com.oracle.classloader.weblogic.LaunchClassLoader
+```
+This custom classloader creates a classloader hierarchy that isolates the deployed application from the JVM bootstrap layer. The Datadog Java agent v1.56.3 instruments `javax.servlet.http.HttpServlet` to create HTTP spans, but because WebLogic's JSP engine loads compiled JSP servlets through the `LaunchClassLoader` hierarchy, the agent's bytecode instrumentation does not propagate into the application's request dispatch path.
+
+**Impact:** JSP-based applications on WebLogic will not generate HTTP traces automatically with dd-java-agent v1.56.3. The agent IS loaded and connected (telemetry, JVM metrics, and profiler work correctly).
+
+**What does work:**
+- JVM metrics (heap, GC, threads) — visible in APM → Services → JVM Metrics
+- Continuous Profiler — visible in APM → Profile Search
+- WebLogic internal HTTP communication (e.g. Admin↔Managed Server) — does get traced
+- MDC injection (`dd.service`, `dd.env`, `dd.version`) — populated in application logs
+
+**What to tell customers:** Real-world applications deployed on WebLogic that use **Spring MVC**, **JAX-RS (Jersey/RESTEasy)**, or **Struts** go through framework-level dispatch mechanisms (`DispatcherServlet`, `Jersey`'s filter chain) that the Datadog agent instruments at a higher level — these will generate traces correctly. The limitation is specific to bare JSP/raw servlet applications without a framework layer.
+
 ---
 
 ## Restarting WebLogic
