@@ -1,0 +1,16 @@
+# app/src/WEB-INF/weblogic.xml
+#
+# Required for WebLogic to use the app's Log4j2 JARs (in WEB-INF/lib/)
+# instead of WebLogic's own bundled logging libraries.
+# Without this, WebLogic ignores the app's Log4j2 and trace-log
+# correlation MDC placeholders will not be populated.
+
+<?xml version="1.0" encoding="UTF-8"?>
+<weblogic-web-app xmlns="http://www.bea.com/ns/weblogic/90">
+  <container-descriptor>
+    <prefer-application-packages>
+      <package-name>org.apache.logging.log4j.*</package-name>
+      <package-name>org.slf4j.*</package-name>
+    </prefer-application-packages>
+  </container-descriptor>
+</weblogic-web-app>

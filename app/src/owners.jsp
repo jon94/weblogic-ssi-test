@@ -1,8 +1,10 @@
-
-To increase the performance of the tunnel, consider installing NumPy. For instructions,
-please see https://cloud.google.com/iap/docs/using-tcp-forwarding#increasing_the_tcp_upload_bandwidth
-
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="org.apache.logging.log4j.LogManager" %>
+<%@ page import="org.apache.logging.log4j.Logger" %>
+<%
+  Logger logger = LogManager.getLogger("petclinic.owners");
+  logger.info("GET /owners.jsp - listing all owners for {}", request.getRemoteAddr());
+%>
 <!DOCTYPE html>
 <html>
 <head><title>Owners - PetClinic</title>

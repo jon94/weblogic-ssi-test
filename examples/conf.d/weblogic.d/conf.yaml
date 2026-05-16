@@ -1,7 +1,8 @@
 # /etc/datadog-agent/conf.d/weblogic.d/conf.yaml
-# Collects logs from WebLogic Admin Server and Managed Server.
-# Covers both the server log (startup, errors, deployments)
-# and the HTTP access log for each server.
+# Collects logs from:
+#   - WebLogic server logs (startup, errors, deployments)
+#   - WebLogic HTTP access logs
+#   - Application Log4j2 file log (with trace-log correlation MDC placeholders)
 
 logs:
   - type: file
@@ -40,4 +41,18 @@ logs:
     env: demo
     tags:
       - server:ssi-demo-ms
+      - version:1.0
+
+  # Application log — contains dd.trace_id and dd.span_id from Log4j2 MDC
+  # when DD_LOGS_INJECTION=true is set and an active trace span exists.
+  # Note: trace_id/span_id are populated only when the Datadog agent has
+  # instrumented the request path (Spring MVC, JAX-RS etc.). WebLogic JSPs
+  # may require explicit span creation via the dd-trace-api.
+  - type: file
+    path: /opt/oracle/logs/petclinic-app.log
+    service: petclinic
+    source: weblogic
+    sourcecategory: app
+    env: demo
+    tags:
       - version:1.0
