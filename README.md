@@ -332,6 +332,60 @@ done
 
 ---
 
+### Unified Service Tagging — nuances for WebLogic
+
+Unified Service Tagging (UST) requires `env`, `service`, and `version` to be set **consistently in two places**. Missing either one means Datadog can't correlate traces, metrics, and logs under the same service identity.
+
+#### 1. Agent-side (`/etc/datadog-agent/datadog.yaml`)
+
+Sets the tags attached to all infrastructure metrics and host-level data reported by the agent:
+
+```yaml
+env: demo
+tags:
+  - service:petclinic
+  - version:1.0
+```
+
+Restart the agent after editing: `sudo systemctl restart datadog-agent`
+
+#### 2. JVM-side (`setDomainEnv.sh`)
+
+Sets the tags attached to APM traces and JVM runtime metrics reported by the Java tracer:
+
+```bash
+export DD_SERVICE=petclinic
+export DD_ENV=demo
+export DD_VERSION=1.0
+```
+
+#### Why both are needed
+
+| Tag source | What it affects |
+|---|---|
+| `datadog.yaml` | Infrastructure metrics, host tags, live processes |
+| `DD_SERVICE/ENV/VERSION` in JVM | APM traces, JVM metrics, log correlation |
+
+If you only set them on the JVM, infrastructure metrics won't share the same tags. If you only set them on the agent, traces won't carry `env`, `service`, and `version` — the **APM Service page will show the service but without version or env filtering**.
+
+#### WebLogic-specific gotcha
+
+WebLogic runs as two separate JVM processes (Admin Server and Managed Server). Because `setDomainEnv.sh` is sourced by both startup scripts, adding the `DD_*` exports there ensures **both JVMs** carry identical UST tags. If you set them only in the Admin Server's start script, the Managed Server's traces will be untagged.
+
+#### Verify UST is working
+
+```bash
+# Confirm DD_ vars are set in both JVM processes
+sudo cat /proc/$(pgrep -f 'weblogic.Name=AdminServer')/environ | tr '\0' '\n' | grep DD_
+sudo cat /proc/$(pgrep -f 'weblogic.Name=ssi-demo-ms')/environ | tr '\0' '\n' | grep DD_
+```
+
+Both should show `DD_SERVICE=petclinic`, `DD_ENV=demo`, `DD_VERSION=1.0`.
+
+In Datadog: open any trace in **APM → Traces**, click the `env`, `service`, or `version` tag — it should pivot seamlessly to metrics and logs with the same tag values.
+
+---
+
 ### Known issues
 
 | Issue | Cause | Fix |
