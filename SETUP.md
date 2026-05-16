@@ -1,5 +1,7 @@
 # Datadog Setup for WebLogic 12.2.1.4
 
+> All config files referenced in this guide are available as examples in the [`examples/`](./examples/) directory of this repo.
+
 ## Step 1 — Install the Datadog Agent
 
 ```bash

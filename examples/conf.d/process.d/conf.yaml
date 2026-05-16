@@ -1,0 +1,19 @@
+# /etc/datadog-agent/conf.d/process.d/conf.yaml
+# Tags WebLogic JVM processes with service:petclinic for process-level
+# CPU, memory, and disk I/O metrics in Datadog Infrastructure → Processes.
+#
+# search_string matches against the full JVM command line.
+# weblogic.Name=<SERVER_NAME> uniquely identifies each WebLogic server process.
+
+init_config:
+
+instances:
+  - name: weblogic-admin
+    search_string: ["weblogic.Name=AdminServer"]
+    exact_match: false
+    service: petclinic
+
+  - name: weblogic-managed
+    search_string: ["weblogic.Name=ssi-demo-ms"]
+    exact_match: false
+    service: petclinic

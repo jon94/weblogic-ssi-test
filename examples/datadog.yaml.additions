@@ -1,0 +1,14 @@
+# These lines are APPENDED to the end of /etc/datadog-agent/datadog.yaml
+# Do not replace the entire file — the installer generates the base config.
+# Add only these lines at the bottom.
+
+env: demo
+
+logs_enabled: true
+
+process_config:
+  process_collection:
+    enabled: true
+
+network_config:
+  enabled: true

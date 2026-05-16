@@ -1,0 +1,17 @@
+# These lines are APPENDED to the end of:
+# /opt/oracle/domains/<YOUR_DOMAIN>/bin/setDomainEnv.sh
+#
+# setDomainEnv.sh is sourced by both startWebLogic.sh and
+# startManagedWebLogic.sh, so these settings apply to both
+# the Admin Server and Managed Server automatically.
+#
+# DD_SERVICE must be set here for APM traces — the process check
+# service tag only affects process-level metrics, not the Java tracer.
+
+export DD_SERVICE=petclinic
+export DD_ENV=demo
+export DD_VERSION=1.0
+export DD_AGENT_HOST=localhost
+export DD_PROFILING_ENABLED=true
+JAVA_OPTIONS="${JAVA_OPTIONS} -javaagent:/opt/datadog/dd-java-agent-1.56.3.jar"
+export JAVA_OPTIONS

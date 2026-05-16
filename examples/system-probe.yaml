@@ -1,0 +1,5 @@
+# /etc/datadog-agent/system-probe.yaml
+# Full file — the installer does not generate this automatically.
+
+network_config:
+  enabled: true

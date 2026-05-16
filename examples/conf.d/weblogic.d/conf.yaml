@@ -1,0 +1,43 @@
+# /etc/datadog-agent/conf.d/weblogic.d/conf.yaml
+# Collects logs from WebLogic Admin Server and Managed Server.
+# Covers both the server log (startup, errors, deployments)
+# and the HTTP access log for each server.
+
+logs:
+  - type: file
+    path: /opt/oracle/domains/base_domain/servers/AdminServer/logs/AdminServer.log
+    service: petclinic
+    source: weblogic
+    env: demo
+    tags:
+      - server:AdminServer
+      - version:1.0
+
+  - type: file
+    path: /opt/oracle/domains/base_domain/servers/AdminServer/logs/access.log
+    service: petclinic
+    source: weblogic
+    sourcecategory: http_access
+    env: demo
+    tags:
+      - server:AdminServer
+      - version:1.0
+
+  - type: file
+    path: /opt/oracle/domains/base_domain/servers/ssi-demo-ms/logs/ssi-demo-ms.log
+    service: petclinic
+    source: weblogic
+    env: demo
+    tags:
+      - server:ssi-demo-ms
+      - version:1.0
+
+  - type: file
+    path: /opt/oracle/domains/base_domain/servers/ssi-demo-ms/logs/access.log
+    service: petclinic
+    source: weblogic
+    sourcecategory: http_access
+    env: demo
+    tags:
+      - server:ssi-demo-ms
+      - version:1.0
