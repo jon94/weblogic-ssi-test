@@ -51,7 +51,7 @@ logs:
   - type: file
     path: /opt/oracle/logs/petclinic-app.log
     service: petclinic
-    source: weblogic
+    source: java
     sourcecategory: app
     env: demo
     tags:
