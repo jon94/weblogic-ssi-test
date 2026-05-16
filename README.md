@@ -200,7 +200,127 @@ sudo datadog-agent status | grep -A3 "Agent \(v"
 
 ---
 
-### Step 4b.3 — Configure Unified Service Tagging on the agent
+### Step 4b.3 — Configure the agent: UST, logs, and process check
+
+#### 3a — Set env globally in datadog.yaml
+
+```bash
+sudo bash -c 'printf "\nenv: demo\n" >> /etc/datadog-agent/datadog.yaml'
+```
+
+> **Note:** Do NOT set `service` globally here. If you set `service` globally, process metrics will be double-tagged (once from the global tag, once from the process check). Set `service` only in the process check config (Step 3c).
+
+#### 3b — Enable log collection
+
+```bash
+sudo bash -c 'printf "\nlogs_enabled: true\n" >> /etc/datadog-agent/datadog.yaml'
+```
+
+Create a WebLogic log source config:
+
+```bash
+sudo mkdir -p /etc/datadog-agent/conf.d/weblogic.d
+sudo bash -c 'cat > /etc/datadog-agent/conf.d/weblogic.d/conf.yaml << EOF
+logs:
+  - type: file
+    path: /opt/oracle/domains/base_domain/servers/AdminServer/logs/AdminServer.log
+    service: petclinic
+    source: weblogic
+    env: demo
+    tags:
+      - server:AdminServer
+      - version:1.0
+
+  - type: file
+    path: /opt/oracle/domains/base_domain/servers/AdminServer/logs/access.log
+    service: petclinic
+    source: weblogic
+    sourcecategory: http_access
+    env: demo
+    tags:
+      - server:AdminServer
+      - version:1.0
+
+  - type: file
+    path: /opt/oracle/domains/base_domain/servers/ssi-demo-ms/logs/ssi-demo-ms.log
+    service: petclinic
+    source: weblogic
+    env: demo
+    tags:
+      - server:ssi-demo-ms
+      - version:1.0
+
+  - type: file
+    path: /opt/oracle/domains/base_domain/servers/ssi-demo-ms/logs/access.log
+    service: petclinic
+    source: weblogic
+    sourcecategory: http_access
+    env: demo
+    tags:
+      - server:ssi-demo-ms
+      - version:1.0
+EOF'
+```
+
+Make WebLogic log files readable by the dd-agent user:
+
+```bash
+sudo find /opt/oracle/domains/base_domain/servers/AdminServer/logs -name '*.log' -exec chmod o+r {} \;
+sudo find /opt/oracle/domains/base_domain/servers/ssi-demo-ms/logs -name '*.log' -exec chmod o+r {} \;
+sudo chmod o+rx /opt/oracle/domains/base_domain/servers/AdminServer/logs
+sudo chmod o+rx /opt/oracle/domains/base_domain/servers/ssi-demo-ms/logs
+sudo chmod o+rx /opt/oracle/domains/base_domain/servers/AdminServer
+sudo chmod o+rx /opt/oracle/domains/base_domain/servers/ssi-demo-ms
+sudo chmod o+rx /opt/oracle/domains/base_domain/servers
+sudo chmod o+rx /opt/oracle/domains/base_domain
+sudo chmod o+rx /opt/oracle/domains
+```
+
+#### 3c — Enable process collection and configure process check
+
+Enable the process agent:
+
+```bash
+sudo bash -c 'printf "\nprocess_config:\n  process_collection:\n    enabled: true\n" >> /etc/datadog-agent/datadog.yaml'
+```
+
+Create the process check config to tag WebLogic processes with `service:petclinic`:
+
+```bash
+sudo mkdir -p /etc/datadog-agent/conf.d/process.d
+sudo bash -c 'cat > /etc/datadog-agent/conf.d/process.d/conf.yaml << EOF
+init_config:
+
+instances:
+  - name: weblogic-admin
+    search_string: ["weblogic.Name=AdminServer"]
+    exact_match: false
+    service: petclinic
+
+  - name: weblogic-managed
+    search_string: ["weblogic.Name=ssi-demo-ms"]
+    exact_match: false
+    service: petclinic
+EOF'
+```
+
+> The `search_string` matches against the full JVM command line. Using `weblogic.Name=AdminServer` uniquely identifies each WebLogic server process.
+
+#### 3d — Restart the agent
+
+```bash
+sudo systemctl restart datadog-agent
+```
+
+Verify all checks are running:
+
+```bash
+sudo datadog-agent status 2>&1 | grep -E 'Process Agent|Status:|weblogic'
+```
+
+Expected: Process Agent `Running`, process check instances `[OK]`, all weblogic log sources `Status: OK`.
+
+---
 
 Unified Service Tagging (UST) requires `env`, `service`, and `version` to be consistent across the agent and the application. Set `env` on the agent so it matches what the tracer reports:
 
